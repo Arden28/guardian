@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Arden28\Guardian\Http\Requests\LoginRequest;
 use Arden28\Guardian\Http\Requests\RegisterRequest;
 use Arden28\Guardian\Events\UserLoggedIn;
+use Arden28\Guardian\Services\PasswordResetService;
 use Arden28\Guardian\Services\TwoFactorService;
 
 class AuthController extends Controller
@@ -18,15 +19,18 @@ class AuthController extends Controller
      * @var TwoFactorService
      */
     protected $twoFactorService;
+    protected $passwordResetService;
 
     /**
      * Create a new controller instance.
      *
      * @param TwoFactorService $twoFactorService
+     * @param PasswordResetService $passwordResetService
      */
-    public function __construct(TwoFactorService $twoFactorService)
+    public function __construct(TwoFactorService $twoFactorService, PasswordResetService $passwordResetService)
     {
         $this->twoFactorService = $twoFactorService;
+        $this->passwordResetService = $passwordResetService;
     }
 
     /**
@@ -130,26 +134,34 @@ class AuthController extends Controller
     }
 
     /**
-     * Request a password reset link (to be implemented).
+     * Request a password reset link.
      *
-     * @param Request $request
+     * @param PasswordResetRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function requestPasswordReset(Request $request)
+    public function requestPasswordReset(PasswordResetRequest $request)
     {
-        // TODO: Implement password reset logic
-        return response()->json(['message' => 'Password reset link sent'], 200);
+        try {
+            $this->passwordResetService->requestReset($request->email);
+            return response()->json(['message' => 'Password reset token sent'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 
     /**
-     * Reset the user's password (to be implemented).
+     * Reset the user's password.
      *
-     * @param Request $request
+     * @param PasswordResetConfirmRequest $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function resetPassword(Request $request)
+    public function resetPassword(PasswordResetConfirmRequest $request)
     {
-        // TODO: Implement password reset confirmation logic
-        return response()->json(['message' => 'Password reset successful'], 200);
+        try {
+            $this->passwordResetService->reset($request->email, $request->token, $request->password);
+            return response()->json(['message' => 'Password reset successful'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 400);
+        }
     }
 }
