@@ -4,7 +4,7 @@ namespace Arden28\Guardian\Services;
 
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use Arden28\Guardian\Models\User;
+use App\Models\User;
 
 class RoleService
 {
