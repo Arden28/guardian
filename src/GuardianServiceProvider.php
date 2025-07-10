@@ -16,13 +16,16 @@ class GuardianServiceProvider extends ServiceProvider
          */
         // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'guardian');
         // $this->loadViewsFrom(__DIR__.'/../resources/views', 'guardian');
-        // $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
-        // $this->loadRoutesFrom(__DIR__.'/routes.php');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadRoutesFrom(__DIR__.'/../../routes/api.php');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__.'/../config/config.php' => config_path('guardian.php'),
             ], 'config');
+
+            // Register events and listeners
+            $this->registerEvents();
 
             // Publishing the views.
             /*$this->publishes([
@@ -56,5 +59,16 @@ class GuardianServiceProvider extends ServiceProvider
         $this->app->singleton('guardian', function () {
             return new Guardian;
         });
+    }
+
+    /**
+     * Register package events and listeners.
+     *
+     * @return void
+     */
+    protected function registerEvents()
+    {
+        // Example: Register events for login, 2FA, and impersonation
+        Event::listen('Vendor\Guardian\Events\UserLoggedIn', 'Vendor\Guardian\Listeners\LogUserLogin');
     }
 }
