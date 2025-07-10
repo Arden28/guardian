@@ -2,6 +2,7 @@
 
 namespace Arden28\Guardian;
 
+use Arden28\Guardian\Providers\SocialiteProvider;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Event;
