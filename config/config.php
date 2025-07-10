@@ -68,4 +68,9 @@ return [
         'enabled' => true,
         'max_duration' => 3600, // Impersonation session duration in seconds
     ],
+
+    // Password Reset
+    'password_reset' => [
+        'token_expiry' => 3600
+    ],
 ];
