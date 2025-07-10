@@ -3,9 +3,50 @@
 namespace Arden28\Guardian\Http\Controllers;
 
 use Arden28\Guardian\Http\Requests\TwoFactorRequest;
+use Arden28\Guardian\Services\TwoFactorService;
 
 class TwoFactorController extends Controller
 {
+    /**
+     * The 2FA service instance.
+     *
+     * @var TwoFactorService
+     */
+    protected $twoFactorService;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @param TwoFactorService $twoFactorService
+     */
+    public function __construct(TwoFactorService $twoFactorService)
+    {
+        $this->twoFactorService = $twoFactorService;
+    }
+
+    /**
+     * Send a 2FA code to the user.
+     *
+     * @param TwoFactorRequest $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function send(TwoFactorRequest $request)
+    {
+        $userModel = config('guardian.user_model', 'App\Models\User');
+        $user = $userModel::where('email', $request->email)->firstOrFail();
+
+        if (!$user->hasTwoFactorEnabled()) {
+            return response()->json(['error' => '2FA not enabled'], 400);
+        }
+
+        try {
+            $this->twoFactorService->sendCode($user, $user->twoFactorSettings->method);
+            return response()->json(['message' => '2FA code sent'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to send 2FA code: ' . $e->getMessage()], 400);
+        }
+    }
+
     /**
      * Enable 2FA for the authenticated user.
      *
@@ -14,8 +55,17 @@ class TwoFactorController extends Controller
      */
     public function enable(TwoFactorRequest $request)
     {
-        // TODO: Implement 2FA enable logic (email, SMS, TOTP)
-        return response()->json(['message' => '2FA enabled successfully'], 200);
+        try {
+            $user = auth()->user();
+            $data = $this->twoFactorService->enable($user, $request->method, $request->phone_number);
+
+            return response()->json([
+                'message' => '2FA enabled successfully',
+                'data' => $data,
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to enable 2FA: ' . $e->getMessage()], 400);
+        }
     }
 
     /**
@@ -26,19 +76,33 @@ class TwoFactorController extends Controller
      */
     public function verify(TwoFactorRequest $request)
     {
-        // TODO: Implement 2FA verification logic
-        return response()->json(['message' => '2FA verified successfully'], 200);
+        $user = auth()->user();
+
+        if (!$user->hasTwoFactorEnabled()) {
+            return response()->json(['error' => '2FA not enabled'], 400);
+        }
+
+        if ($this->twoFactorService->verifyCode($user, $user->twoFactorSettings->method, $request->code)) {
+            $token = $user->createToken('auth_token')->plainTextToken;
+            return response()->json([
+                'message' => '2FA verified successfully',
+                'token' => $token,
+            ], 200);
+        }
+
+        return response()->json(['error' => 'Invalid 2FA code'], 400);
     }
 
     /**
      * Disable 2FA for the authenticated user.
      *
-     * @param Request $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function disable(Request $request)
+    public function disable(\Illuminate\Http\Request $request)
     {
-        // TODO: Implement 2FA disable logic
+        $user = auth()->user();
+        $this->twoFactorService->disable($user);
         return response()->json(['message' => '2FA disabled successfully'], 200);
     }
 }

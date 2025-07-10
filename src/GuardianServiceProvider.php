@@ -2,6 +2,7 @@
 
 namespace Arden28\Guardian;
 
+use Arden28\Guardian\Providers\SocialiteProvider;
 use Illuminate\Support\ServiceProvider;
 
 class GuardianServiceProvider extends ServiceProvider
@@ -26,6 +27,9 @@ class GuardianServiceProvider extends ServiceProvider
 
             // Register events and listeners
             $this->registerEvents();
+            
+            // Register Socialite provider
+            $this->app->register(SocialiteProvider::class);
 
             // Publishing the views.
             /*$this->publishes([
@@ -69,6 +73,6 @@ class GuardianServiceProvider extends ServiceProvider
     protected function registerEvents()
     {
         // Example: Register events for login, 2FA, and impersonation
-        Event::listen('Vendor\Guardian\Events\UserLoggedIn', 'Vendor\Guardian\Listeners\LogUserLogin');
+        Event::listen('Arden28\Guardian\Events\UserLoggedIn', 'Arden28\Guardian\Listeners\LogUserLogin');
     }
 }

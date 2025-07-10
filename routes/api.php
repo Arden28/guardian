@@ -27,6 +27,10 @@ Route::group(['prefix' => config('guardian.api.prefix', 'api/auth')], function (
     // Social login routes
     Route::get('/social/{provider}', [SocialAuthController::class, 'redirect'])->name('guardian.social.redirect');
     Route::get('/social/{provider}/callback', [SocialAuthController::class, 'callback'])->name('guardian.social.callback');
+
+    // 2FA code sending (public, but rate-limited)
+    Route::post('/2fa/send', [TwoFactorController::class, 'send'])->name('guardian.2fa.send');
+        // ->middleware('throttle:guardian_2fa');
 });
 
 // Protected routes (require Sanctum authentication)
@@ -36,7 +40,7 @@ Route::group(['prefix' => config('guardian.api.prefix', 'api/auth'), 'middleware
 
     // 2FA routes
     Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])->name('guardian.2fa.enable');
-    Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->name('guardian.2fa.verify');
+    Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->middleware('throttle:guardian_2fa')->name('guardian.2fa.verify');
     Route::post('/2fa/disable', [TwoFactorController::class, 'disable'])->name('guardian.2fa.disable');
 
     // Impersonation routes

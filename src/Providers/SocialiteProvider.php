@@ -17,7 +17,7 @@ class SocialiteProvider extends ServiceProvider
         Socialite::extend('telegram', function ($app) {
             $config = config('guardian.socialite.drivers.telegram');
             return Socialite::buildProvider(
-                \Vendor\Guardian\Socialite\TelegramProvider::class,
+                \Arden28\Guardian\Socialite\TelegramProvider::class,
                 $config
             );
         });

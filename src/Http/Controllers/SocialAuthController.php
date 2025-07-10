@@ -2,72 +2,74 @@
 
 namespace Arden28\Guardian\Http\Controllers;
 
-use Laravel\Socialite\Facades\Socialite;
-use Illuminate\Support\Facades\Auth;
-use Arden28\Guardian\Events\UserLoggedIn;
+use Arden28\Guardian\Services\SocialAuthService;
+use Arden28\Guardian\Http\Requests\SocialAuthRequest;
 
 class SocialAuthController extends Controller
 {
     /**
-     * Redirect the user to the social provider's authentication page.
+     * The social auth service instance.
      *
-     * @param string $provider
-     * @return \Illuminate\Http\RedirectResponse
+     * @var SocialAuthService
      */
-    public function redirect($provider)
-    {
-        // Validate provider against configured socialite drivers
-        if (!array_key_exists($provider, config('guardian.socialite.drivers', []))) {
-            return response()->json(['error' => 'Unsupported provider'], 400);
-        }
+    protected $socialAuthService;
 
-        return Socialite::driver($provider)->stateless()->redirect();
+    /**
+     * Create a new controller instance.
+     *
+     * @param SocialAuthService $socialAuthService
+     */
+    public function __construct(SocialAuthService $socialAuthService)
+    {
+        $this->socialAuthService = $socialAuthService;
     }
 
     /**
-     * Handle the callback from the social provider and authenticate the user.
+     * Redirect the user to the social provider's authentication page.
      *
      * @param string $provider
      * @return \Illuminate\Http\JsonResponse
      */
-    public function callback($provider)
+    public function redirect($provider)
+    {
+        // Validate provider
+        if (!array_key_exists($provider, config('guardian.socialite.drivers', []))) {
+            return response()->json(['error' => 'Unsupported provider'], 400);
+        }
+
+        // For Telegram, return the redirect URI (handled by frontend)
+        if ($provider === 'telegram') {
+            return response()->json([
+                'redirect_url' => config('guardian.socialite.drivers.telegram.redirect'),
+            ], 200);
+        }
+
+        // Redirect to provider's auth page
+        return response()->json([
+            'redirect_url' => \Laravel\Socialite\Facades\Socialite::driver($provider)->stateless()->redirect()->getTargetUrl(),
+        ], 200);
+    }
+
+    /**
+     * Handle the callback from the social provider.
+     *
+     * @param SocialAuthRequest $request
+     * @param string $provider
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function callback(SocialAuthRequest $request, $provider)
     {
         try {
-            // Get user from social provider
-            $socialUser = Socialite::driver($provider)->stateless()->user();
+            // Handle Telegram separately
+            $telegramData = $provider === 'telegram' ? $request->all() : null;
 
-            // Find or create user
-            $userModel = config('guardian.user_model', 'App\Models\User');
-            $user = $userModel::firstOrCreate(
-                [
-                    'social_provider' => $provider,
-                    'social_id' => $socialUser->id,
-                ],
-                [
-                    'name' => $socialUser->name ?? $socialUser->email,
-                    'email' => $socialUser->email,
-                    'is_active' => true,
-                ]
-            );
-
-            // Assign default role if new user
-            if ($user->wasRecentlyCreated) {
-                $user->assignRole(config('guardian.roles.default_role', 'user'));
-            }
-
-            // Log in the user
-            Auth::login($user);
-
-            // Issue Sanctum token
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            // Dispatch login event
-            event(new UserLoggedIn($user));
+            // Process social login
+            $result = $this->socialAuthService->handleSocialLogin($provider, $telegramData);
 
             return response()->json([
                 'message' => 'Social login successful',
-                'user' => $user,
-                'token' => $token,
+                'user' => $result['user'],
+                'token' => $result['token'],
             ], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Social login failed: ' . $e->getMessage()], 400);
