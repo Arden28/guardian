@@ -47,4 +47,15 @@ Route::group(['prefix' => config('guardian.api.prefix', 'api/auth'), 'middleware
     // Impersonation routes
     Route::post('/impersonate', [ImpersonationController::class, 'start'])->name('guardian.impersonate.start');
     Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])->name('guardian.impersonate.stop');
+    
+    // Role and permission routes
+    Route::post('/roles/assign', [RoleController::class, 'assignRole'])->name('guardian.roles.assign')
+        ->middleware(config('guardian.roles.middleware.permission', 'guardian_permission') . ':manage_roles,api');
+    Route::post('/roles/remove', [RoleController::class, 'removeRole'])->name('guardian.roles.remove')
+        ->middleware(config('guardian.roles.middleware.permission', 'guardian_permission') . ':manage_roles,api');
+    Route::post('/permissions/assign', [RoleController::class, 'assignPermission'])->name('guardian.permissions.assign')
+        ->middleware(config('guardian.roles.middleware.permission', 'guardian_permission') . ':manage_permissions,api');
+    Route::post('/permissions/remove', [RoleController::class, 'removePermission'])->name('guardian.permissions.remove')
+        ->middleware(config('guardian.roles.middleware.permission', 'guardian_permission') . ':manage_permissions,api');
+    Route::get('/check', [RoleController::class, 'check'])->name('guardian.check');
 });

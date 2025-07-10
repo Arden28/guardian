@@ -4,6 +4,7 @@ namespace Arden28\Guardian;
 
 use Arden28\Guardian\Providers\SocialiteProvider;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\PermissionServiceProvider;
 
 class GuardianServiceProvider extends ServiceProvider
 {
@@ -15,39 +16,15 @@ class GuardianServiceProvider extends ServiceProvider
         /*
          * Optional methods to load your package assets
          */
-        // $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'guardian');
-        // $this->loadViewsFrom(__DIR__.'/../resources/views', 'guardian');
-        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->publishConfig();
+        $this->publishMigrations();
+        
         $this->loadRoutesFrom(__DIR__.'/../../routes/api.php');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__.'/../config/config.php' => config_path('guardian.php'),
             ], 'config');
-
-            // Register events and listeners
-            $this->registerEvents();
-            
-            // Register Socialite provider
-            $this->app->register(SocialiteProvider::class);
-
-            // Publishing the views.
-            /*$this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/guardian'),
-            ], 'views');*/
-
-            // Publishing assets.
-            /*$this->publishes([
-                __DIR__.'/../resources/assets' => public_path('vendor/guardian'),
-            ], 'assets');*/
-
-            // Publishing the translation files.
-            /*$this->publishes([
-                __DIR__.'/../resources/lang' => resource_path('lang/vendor/guardian'),
-            ], 'lang');*/
-
-            // Registering package commands.
-            // $this->commands([]);
         }
     }
 
@@ -59,10 +36,57 @@ class GuardianServiceProvider extends ServiceProvider
         // Automatically apply the package configuration
         $this->mergeConfigFrom(__DIR__.'/../config/config.php', 'guardian');
 
-        // Register the main class to use with the facade
-        $this->app->singleton('guardian', function () {
-            return new Guardian;
+
+        // Bind the User model dynamically
+        $this->app->bind('guardian.user', function () {
+            $model = config('guardian.user_model', 'App\Models\User');
+            return new $model;
         });
+
+        // Register Socialite provider
+        $this->app->register(SocialiteProvider::class);
+
+        // Register Spatie's PermissionServiceProvider
+        $this->app->register(PermissionServiceProvider::class);
+    }
+
+    /**
+     * Publish package config.
+     *
+     * @return void
+     */
+    protected function publishConfig(){
+        $this->publishes([
+            __DIR__.'/../config/config.php' => config_path('guardian.php'),
+        ], 'guardian.config');
+    }
+
+
+    /**
+     * Publish package migrations.
+     *
+     * @return void
+     */
+    protected function publishMigrations()
+    {
+        $timestamp = now()->format('Y_m_d_His');
+
+        $migrations = [
+            'create_two_factor_settings_table.php',
+            'create_impersonation_logs_table.php',
+        ];
+
+        $migrationFiles = [];
+
+        foreach ($migrations as $index => $migration) {
+            $migrationFiles[__DIR__ . "/../database/migrations/{$migration}"] =
+                database_path("migrations/{$timestamp}_{$migration}");
+
+            // Increment timestamp safely
+            $timestamp = now()->addSeconds(1)->format('Y_m_d_His');
+        }
+
+        $this->publishes($migrationFiles, 'guardian.migrations');
     }
 
     /**
