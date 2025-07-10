@@ -2,8 +2,9 @@
 
 namespace Arden28\Guardian;
 
-use Arden28\Guardian\Providers\SocialiteProvider;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Event;
 use Spatie\Permission\PermissionServiceProvider;
 
 class GuardianServiceProvider extends ServiceProvider
@@ -18,14 +19,17 @@ class GuardianServiceProvider extends ServiceProvider
          */
         $this->publishConfig();
         $this->publishMigrations();
-        
-        $this->loadRoutesFrom(__DIR__.'/../../routes/api.php');
 
-        if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__.'/../config/config.php' => config_path('guardian.php'),
-            ], 'config');
-        }
+        // Load API routes
+        $this->loadRoutesFrom(__DIR__ . '/../../routes/api.php');
+
+        // Register middleware
+        $this->app['router']->aliasMiddleware('guardian_role', \Arden28\Guardian\Http\Middleware\RoleMiddleware::class);
+        $this->app['router']->aliasMiddleware('guardian_permission', \Arden28\Guardian\Http\Middleware\PermissionMiddleware::class);
+
+        // Register events and listeners
+        $this->registerEvents();
+
     }
 
     /**
