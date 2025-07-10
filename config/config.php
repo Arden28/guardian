@@ -8,7 +8,7 @@ return [
     |
     | This configuration file allows you to customize the Guardian package's
     | authentication settings, including Socialite providers, 2FA methods,
-    | and API behavior.
+    | API behavior, password reset, role management, and impersonation.
     |
     */
 
@@ -31,46 +31,66 @@ return [
                 'redirect' => env('GOOGLE_REDIRECT_URI'),
             ],
             'telegram' => [
-                'client_id' => env('TELEGRAM_CLIENT_ID'),
-                'client_secret' => env('TELEGRAM_CLIENT_SECRET'),
-                'redirect' => env('TELEGRAM_REDIRECT_URI'),
                 'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+                'redirect' => env('TELEGRAM_REDIRECT_URI'),
             ],
-            // Add more providers as needed
         ],
     ],
 
     // 2FA settings
     'two_factor' => [
         'enabled' => true,
-        'methods' => ['email', 'sms', 'totp'], // Supported 2FA methods
-        'sms_provider' => 'twilio', // Options: twilio, custom
+        'methods' => ['email', 'sms', 'totp'],
+        'sms_provider' => 'twilio',
+
         'twilio' => [
             'account_sid' => env('TWILIO_SID'),
             'auth_token' => env('TWILIO_AUTH_TOKEN'),
             'from' => env('TWILIO_FROM'),
         ],
+
         'vonage' => [
             'key' => env('VONAGE_KEY'),
             'secret' => env('VONAGE_SECRET'),
             'from' => env('VONAGE_SMS_FROM'),
         ],
+
+        'code_length' => 6,
+        'code_expiry' => 300, // 5 minutes
+        'rate_limit' => [
+            'attempts' => 5,
+            'window' => 60,
+        ],
+        'totp' => [
+            'issuer' => env('APP_NAME', 'Guardian'),
+            'digits' => 6,
+            'period' => 30,
+        ],
+    ],
+    
+    // Password reset settings
+    'password_reset' => [
+        'token_expiry' => 3600, // 1 hour
+        'rate_limit' => [
+            'attempts' => 5,
+            'window' => 60,
+        ],
     ],
 
     // Role and permission settings
     'roles' => [
-        'default_role' => 'user', // Default role for new users
-        'admin_role' => 'admin', // Role with impersonation permissions
+        'default_role' => 'user',
+        'admin_role' => 'admin',
+        'guards' => ['web', 'api'],
+        'middleware' => [
+            'role' => 'guardian_role',
+            'permission' => 'guardian_permission',
+        ],
     ],
 
     // Impersonation settings
     'impersonation' => [
         'enabled' => true,
-        'max_duration' => 3600, // Impersonation session duration in seconds
-    ],
-
-    // Password Reset
-    'password_reset' => [
-        'token_expiry' => 3600
+        'max_duration' => 3600, // 1 hour
     ],
 ];
