@@ -8,9 +8,27 @@ use Illuminate\Support\Facades\Hash;
 use Arden28\Guardian\Http\Requests\LoginRequest;
 use Arden28\Guardian\Http\Requests\RegisterRequest;
 use Arden28\Guardian\Events\UserLoggedIn;
+use Arden28\Guardian\Services\TwoFactorService;
 
 class AuthController extends Controller
 {
+    /**
+     * The 2FA service instance.
+     *
+     * @var TwoFactorService
+     */
+    protected $twoFactorService;
+
+    /**
+     * Create a new controller instance.
+     *
+     * @param TwoFactorService $twoFactorService
+     */
+    public function __construct(TwoFactorService $twoFactorService)
+    {
+        $this->twoFactorService = $twoFactorService;
+    }
+
     /**
      * Handle user login and issue a Sanctum token.
      *
@@ -27,12 +45,17 @@ class AuthController extends Controller
 
             // Check if 2FA is enabled
             if ($user->hasTwoFactorEnabled()) {
-                // Trigger 2FA verification (to be implemented in TwoFactorController)
-                return response()->json([
-                    'message' => '2FA verification required',
-                    'requires_2fa' => true,
-                    'user_id' => $user->id,
-                ], 200);
+                // Send 2FA code
+                try {
+                    $this->twoFactorService->sendCode($user, $user->twoFactorSettings->method);
+                    return response()->json([
+                        'message' => '2FA verification required',
+                        'requires_2fa' => true,
+                        'user_id' => $user->id,
+                    ], 200);
+                } catch (\Exception $e) {
+                    return response()->json(['error' => 'Failed to send 2FA code: ' . $e->getMessage()], 400);
+                }
             }
 
             // Issue Sanctum token
