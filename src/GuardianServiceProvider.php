@@ -22,7 +22,7 @@ class GuardianServiceProvider extends ServiceProvider
         $this->publishMigrations();
 
         // Load API routes
-        $this->loadRoutesFrom(__DIR__ . '/../../routes/api.php');
+        $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
 
         // Register middleware
         $this->app['router']->aliasMiddleware('guardian_role', \Arden28\Guardian\Http\Middleware\RoleMiddleware::class);
