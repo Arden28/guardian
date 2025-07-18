@@ -2,6 +2,7 @@
 
 namespace Arden28\Guardian\Http\Controllers;
 
+use App\Http\Controllers\Controller; // Laravel default controller
 use Illuminate\Support\Facades\Auth;
 use Arden28\Guardian\Http\Requests\ImpersonationRequest;
 use Arden28\Guardian\Models\ImpersonationLog;

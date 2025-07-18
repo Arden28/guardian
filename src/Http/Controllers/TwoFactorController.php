@@ -2,6 +2,7 @@
 
 namespace Arden28\Guardian\Http\Controllers;
 
+use App\Http\Controllers\Controller; // Laravel default controller
 use Arden28\Guardian\Http\Requests\TwoFactorRequest;
 use Arden28\Guardian\Services\TwoFactorService;
 

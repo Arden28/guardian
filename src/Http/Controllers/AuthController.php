@@ -2,6 +2,7 @@
 
 namespace Arden28\Guardian\Http\Controllers;
 
+use App\Http\Controllers\Controller; // Laravel default controller
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;

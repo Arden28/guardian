@@ -2,6 +2,7 @@
 
 namespace Arden28\Guardian\Http\Controllers;
 
+use App\Http\Controllers\Controller; // Laravel default controller
 use Arden28\Guardian\Http\Requests\AssignRoleRequest;
 use Arden28\Guardian\Http\Requests\AssignPermissionRequest;
 use Arden28\Guardian\Services\RoleService;
