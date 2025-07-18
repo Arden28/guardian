@@ -5,6 +5,7 @@ use Arden28\Guardian\Http\Controllers\AuthController;
 use Arden28\Guardian\Http\Controllers\SocialAuthController;
 use Arden28\Guardian\Http\Controllers\TwoFactorController;
 use Arden28\Guardian\Http\Controllers\ImpersonationController;
+use Arden28\Guardian\Http\Controllers\RoleController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,7 +22,7 @@ use Arden28\Guardian\Http\Controllers\ImpersonationController;
 Route::group(['prefix' => config('guardian.api.prefix', 'api/auth')], function () {
     Route::post('/login', [AuthController::class, 'login'])->name('guardian.login');
     Route::post('/register', [AuthController::class, 'register'])->name('guardian.register');
-    Route::post('/password/reset', [AuthController::class, 'requestPasswordReset'])->name('guardian.password.request');
+    Route::post('/password/reset', [AuthController::class, 'requestPasswordReset'])->name('guardian.password.request')
         ->middleware('throttle:5,1');
     Route::post('/password/reset/confirm', [AuthController::class, 'resetPassword'])->name('guardian.password.reset');
 
@@ -35,7 +36,10 @@ Route::group(['prefix' => config('guardian.api.prefix', 'api/auth')], function (
 });
 
 // Protected routes (require Sanctum authentication)
-Route::group(['prefix' => config('guardian.api.prefix', 'api/auth'), 'middleware' => config('guardian.api.middleware', ['api', 'auth:sanctum'])], function () {
+Route::group([
+    'prefix' => config('guardian.api.prefix', 'api/auth'),
+    'middleware' => config('guardian.api.middleware', ['api', 'auth:sanctum'])
+], function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('guardian.logout');
     Route::get('/user', [AuthController::class, 'user'])->name('guardian.user');
 
@@ -47,7 +51,7 @@ Route::group(['prefix' => config('guardian.api.prefix', 'api/auth'), 'middleware
     // Impersonation routes
     Route::post('/impersonate', [ImpersonationController::class, 'start'])->name('guardian.impersonate.start');
     Route::post('/impersonate/stop', [ImpersonationController::class, 'stop'])->name('guardian.impersonate.stop');
-    
+
     // Role and permission routes
     Route::post('/roles/assign', [RoleController::class, 'assignRole'])->name('guardian.roles.assign')
         ->middleware(config('guardian.roles.middleware.permission', 'guardian_permission') . ':manage_roles,api');
@@ -57,5 +61,6 @@ Route::group(['prefix' => config('guardian.api.prefix', 'api/auth'), 'middleware
         ->middleware(config('guardian.roles.middleware.permission', 'guardian_permission') . ':manage_permissions,api');
     Route::post('/permissions/remove', [RoleController::class, 'removePermission'])->name('guardian.permissions.remove')
         ->middleware(config('guardian.roles.middleware.permission', 'guardian_permission') . ':manage_permissions,api');
+
     Route::get('/check', [RoleController::class, 'check'])->name('guardian.check');
 });
