@@ -1,6 +1,6 @@
 <?php 
 
-namespace Arden28\Guardian\Events;
+namespace Arden28\Guardian\Listeners;
 
 use Arden28\Guardian\Events\UserLoggedIn;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +14,7 @@ class LogUserLogin
     {
         $user = $event->user;
 
-        // You can customize the log logic here
+        // Customize the log logic here
         Log::info("User logged in: ID {$user->id}, Email: {$user->email}, IP: " . request()->ip());
     }
 }
