@@ -21,9 +21,9 @@ use Arden28\Guardian\Http\Controllers\ImpersonationController;
 Route::group(['prefix' => config('guardian.api.prefix', 'api/auth')], function () {
     Route::post('/login', [AuthController::class, 'login'])->name('guardian.login');
     Route::post('/register', [AuthController::class, 'register'])->name('guardian.register');
-    Route::post('/password/reset', [AuthController::class, 'requestPasswordReset'])->name('guardian.password.request')
+    Route::post('/password/reset', [AuthController::class, 'requestPasswordReset'])->name('guardian.password.request');
         ->middleware('throttle:5,1');
-    Route::post('/password/reset/confirm', [AuthController::class, 'resetPassword'])->name('guardian.password.reset')
+    Route::post('/password/reset/confirm', [AuthController::class, 'resetPassword'])->name('guardian.password.reset');
 
     // Social login routes
     Route::get('/social/{provider}', [SocialAuthController::class, 'redirect'])->name('guardian.social.redirect');
