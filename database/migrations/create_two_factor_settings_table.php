@@ -21,7 +21,7 @@ class CreateTwoFactorSettingsTable extends Migration
             } else {
                 $table->unsignedBigInteger('user_id');
             }
-            $table->string('method')->nullable(); // 2FA method (email, sms, totp)
+            $table->string('method')->default('totp'); // 2FA method (email, sms, totp)
             $table->string('secret')->nullable(); // Encrypted secret for TOTP
             $table->string('phone_number')->nullable(); // Phone number for SMS 2FA
             $table->boolean('is_enabled')->default(false); // 2FA enabled status

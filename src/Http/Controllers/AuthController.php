@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Arden28\Guardian\Http\Requests\LoginRequest;
 use Arden28\Guardian\Http\Requests\RegisterRequest;
 use Arden28\Guardian\Events\UserLoggedIn;
+use Arden28\Guardian\Models\TwoFactorSetting;
 use Arden28\Guardian\Services\PasswordResetService;
 use Arden28\Guardian\Services\TwoFactorService;
 
@@ -93,6 +94,12 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'is_active' => true,
+        ]);
+
+        // Two Factor Authentification
+        TwoFactorSetting::create([
+            'user_id' => $user->id,
+            'phone_number' => $user->phone_number ?? null,
         ]);
 
         // Assign default role
